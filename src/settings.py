@@ -6,6 +6,28 @@ from fastapi.openapi.utils import get_openapi
 from typing import Dict
 
 
+def custom_openapi(app: FastAPI) -> Dict:
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title=app.title,
+        version="1.0.0",
+        routes=app.routes,
+    )
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+        }
+    }
+    for path in openapi_schema["paths"]:
+        for method in openapi_schema["paths"][path]:
+            openapi_schema["paths"][path][method]["security"] = [{"BearerAuth": []}]
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
 class Settings(BaseSettings):
     # APP CONFIG
     APP_NAME: str
@@ -30,6 +52,10 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_minutes: int = 1
+
+    # REDIS
+    REDIS_HOST: str
+    REDIS_PORT: int
 
     @cached_property
     def db_url(self):
@@ -68,25 +94,3 @@ LOGGING_CONFIG = {
     },
 }
 logging.config.dictConfig(LOGGING_CONFIG)
-
-
-def custom_openapi(app: FastAPI) -> Dict:
-    if app.openapi_schema:
-        return app.openapi_schema
-    openapi_schema = get_openapi(
-        title=app.title,
-        version="1.0.0",
-        routes=app.routes,
-    )
-    openapi_schema["components"]["securitySchemes"] = {
-        "BearerAuth": {
-            "type": "http",
-            "scheme": "bearer",
-            "bearerFormat": "JWT",
-        }
-    }
-    for path in openapi_schema["paths"]:
-        for method in openapi_schema["paths"][path]:
-            openapi_schema["paths"][path][method]["security"] = [{"BearerAuth": []}]
-    app.openapi_schema = openapi_schema
-    return app.openapi_schema
