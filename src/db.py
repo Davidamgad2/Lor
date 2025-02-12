@@ -5,7 +5,9 @@ from typing import AsyncGenerator
 
 from settings import settings
 
-async_engine = create_async_engine(settings.db_url, echo=False, future=True)
+async_engine = create_async_engine(
+    settings.db_url, echo=False, future=True, pool_size=20, max_overflow=5
+)
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
