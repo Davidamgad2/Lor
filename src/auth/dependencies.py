@@ -4,16 +4,13 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 from jose import JWTError, jwt
-from redis.asyncio import Redis
 from auth.models import User, BlacklistedToken
 from db import get_async_session
 from settings import settings
-
-redis_client = Redis(host="localhost", port=6379, decode_responses=True)
+from redis.asyncio import Redis
+from helpers.redis import get_redis
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-
-redis_client = Redis(host="localhost", port=6379, decode_responses=True)
 
 
 async def verify_refresh_token(token: str, db: AsyncSession) -> str:
@@ -40,7 +37,12 @@ async def verify_refresh_token(token: str, db: AsyncSession) -> str:
         )
 
 
-async def authenticate_user(username: str, password: str, db: AsyncSession) -> User:
+async def authenticate_user(
+    username: str,
+    password: str,
+    db: AsyncSession,
+    redis_client: Redis = Depends(get_redis),
+) -> User:
     query = select(User).where(User.username == username)
     result = await db.execute(query)
     user = result.scalars().first()
@@ -49,7 +51,9 @@ async def authenticate_user(username: str, password: str, db: AsyncSession) -> U
     return None
 
 
-async def blacklist_token(token: str, db: AsyncSession) -> None:
+async def blacklist_token(
+    token: str, db: AsyncSession, redis_client: Redis = Depends(get_redis)
+) -> None:
     blacklisted = BlacklistedToken(token=token)
     db.add(blacklisted)
     await db.commit()
@@ -58,7 +62,9 @@ async def blacklist_token(token: str, db: AsyncSession) -> None:
     )
 
 
-async def is_token_blacklisted(token: str, db: AsyncSession) -> bool:
+async def is_token_blacklisted(
+    token: str, db: AsyncSession, redis_client: Redis = Depends(get_redis)
+) -> bool:
     exists = await redis_client.get(f"bl:{token}")
     if exists:
         return True
