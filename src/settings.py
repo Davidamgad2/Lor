@@ -1,6 +1,9 @@
 from pydantic_settings import BaseSettings
 from functools import cached_property
 import logging.config
+from fastapi import FastAPI
+from fastapi.openapi.utils import get_openapi
+from typing import Dict
 
 
 class Settings(BaseSettings):
@@ -21,6 +24,12 @@ class Settings(BaseSettings):
     # EXTERNAL API CONFIG
     LOR_API_KEY: str
     LOR_API_BASE_URL: str
+
+    # JWT
+    secret_key: str = "your-secret-key"
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+    refresh_token_expire_minutes: int = 1
 
     @cached_property
     def db_url(self):
@@ -59,3 +68,25 @@ LOGGING_CONFIG = {
     },
 }
 logging.config.dictConfig(LOGGING_CONFIG)
+
+
+def custom_openapi(app: FastAPI) -> Dict:
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title=app.title,
+        version="1.0.0",
+        routes=app.routes,
+    )
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+        }
+    }
+    for path in openapi_schema["paths"]:
+        for method in openapi_schema["paths"][path]:
+            openapi_schema["paths"][path][method]["security"] = [{"BearerAuth": []}]
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
