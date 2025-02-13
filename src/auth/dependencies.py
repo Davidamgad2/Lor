@@ -41,7 +41,6 @@ async def authenticate_user(
     username: str,
     password: str,
     db: AsyncSession,
-    redis_client: Redis = Depends(get_redis),
 ) -> User:
     query = select(User).where(User.username == username)
     result = await db.execute(query)

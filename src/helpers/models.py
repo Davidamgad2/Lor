@@ -1,19 +1,17 @@
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Boolean, DateTime, UUID
+from sqlmodel import SQLModel, Field
 from datetime import datetime
+from uuid import UUID
 import uuid_utils as uuid
-
-Base = declarative_base()
 
 
 def utcnow():
     return datetime.utcnow()
 
 
-class BaseModel(Base):
+class BaseModel(SQLModel):
     __abstract__ = True
 
-    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid7)
-    is_deleted = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=utcnow)
-    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+    id: UUID = Field(default_factory=uuid.uuid7, primary_key=True, index=True)
+    is_deleted: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=utcnow)
+    updated_at: datetime = Field(default_factory=utcnow)
