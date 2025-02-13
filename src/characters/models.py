@@ -15,15 +15,15 @@ class UserFavoriteCharacter(BaseModel, table=True):
         {"extend_existing": True},
     )
 
-    user_id: UUID = Field(foreign_key="users.id")
-    character_id: UUID = Field(foreign_key="lor_characters.id")
+    user_id: UUID = Field(foreign_key="users.id", ondelete="CASCADE")
+    character_id: UUID = Field(foreign_key="lor_characters.id", ondelete="CASCADE")
 
 
 class LorCharacter(BaseModel, LorCharchter, table=True):
     __tablename__ = "lor_characters"
     __table_args__ = {"extend_existing": True}
 
-    external_id: str = Field(String, index=True, alias="_id")
+    external_id: str = Field(String, index=True, alias="_id", unique=True)
     name: str = Field(String, index=True)
     favorited_by: List["User"] = Relationship(
         back_populates="favorite_characters",

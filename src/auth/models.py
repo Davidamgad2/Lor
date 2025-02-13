@@ -1,7 +1,7 @@
 from helpers.models import BaseModel
 from sqlmodel import Field, Relationship
 from typing import List
-
+from pydantic import EmailStr
 from characters.models import LorCharacter, UserFavoriteCharacter
 
 
@@ -10,7 +10,7 @@ class User(BaseModel, table=True):
     __table_args__ = {"extend_existing": True}
 
     username: str = Field(unique=True, index=True)
-    email: str = Field(unique=True, index=True)
+    email: EmailStr = Field(unique=True, index=True)
     password: str
     is_active: bool = Field(default=True)
     is_superuser: bool = Field(default=False)

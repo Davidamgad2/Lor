@@ -79,6 +79,23 @@ class RedisClient:
 async def cache_user_favorites(
     user_id: str, favorites: List[LorCharchter], expire_seconds: int = 3600
 ):
+    """
+    Cache user's favorite LoR characters in Redis.
+
+    This function stores a list of favorite characters for a specific user in Redis cache
+    with an expiration time.
+
+    Args:
+        user_id (str): The unique identifier of the user
+        favorites (List[LorCharchter]): List of LoR character objects to cache
+        expire_seconds (int, optional): Cache expiration time in seconds. Defaults to 3600.
+
+    Returns:
+        None
+
+    Examples:
+        >>> await cache_user_favorites("user123", [char1, char2], 7200)
+    """
     redis = await RedisClient.get_instance()
     cache_key = f"user:{user_id}:favorites"
     serialized_favorites = [serialize_lor_character(f) for f in favorites]
@@ -86,6 +103,22 @@ async def cache_user_favorites(
 
 
 async def get_cached_user_favorites(user_id: str) -> List[LorCharchter] | None:
+    """
+    Retrieves a user's cached favorite characters from Redis.
+
+    Args:
+        user_id (str): The unique identifier of the user whose favorites are being retrieved.
+
+    Returns:
+        List[LorCharacter] | None: A list of LorCharacter objects if cached data exists,
+        or None if no cached data is found.
+
+    Example:
+        favorites = await get_cached_user_favorites("user123")
+        if favorites:
+            for character in favorites:
+                print(character.name)
+    """
     redis = await RedisClient.get_instance()
     cache_key = f"user:{user_id}:favorites"
     cached = await redis.get(cache_key)
@@ -98,6 +131,18 @@ async def get_cached_user_favorites(user_id: str) -> List[LorCharchter] | None:
 
 
 async def invalidate_user_favorites(user_id: str):
+    """
+    Invalidates the cached favorites for a specific user by removing the corresponding Redis key.
+
+    Args:
+        user_id (str): The unique identifier of the user whose favorites cache needs to be invalidated.
+
+    Returns:
+        None
+
+    Raises:
+        RedisError: If there's an error connecting to or interacting with Redis.
+    """
     redis = await RedisClient.get_instance()
     cache_key = f"user:{user_id}:favorites"
     await redis.delete(cache_key)

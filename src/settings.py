@@ -7,6 +7,20 @@ from typing import Dict
 
 
 def custom_openapi(app: FastAPI) -> Dict:
+    """
+    Customizes the OpenAPI schema for the FastAPI application to include JWT Bearer authentication.
+    This function modifies the OpenAPI documentation to add security schemes and requirements
+    for JWT Bearer token authentication on all endpoints.
+    Args:
+        app (FastAPI): The FastAPI application instance to customize OpenAPI for.
+    Returns:
+        Dict: The modified OpenAPI schema with JWT Bearer authentication configured.
+    Note:
+        - If the OpenAPI schema already exists for the app, returns it without modifications
+        - Adds 'BearerAuth' security scheme with JWT bearer format
+        - Applies the security requirement to all endpoints in the API
+    """
+
     if app.openapi_schema:
         return app.openapi_schema
     openapi_schema = get_openapi(
