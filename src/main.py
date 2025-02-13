@@ -1,20 +1,31 @@
 import uvicorn
 from fastapi import FastAPI
 from settings import settings, custom_openapi
-from auth.router import router as auth_router
+from routers import api_router
+from characters.tasks import start_scheduler
+from contextlib import asynccontextmanager
+
+API_V1_PREFIX = "/api"
 
 
-API_V1_PREFIX = "/api/v1"
+@asynccontextmanager
+async def setup(app: FastAPI):
+    start_scheduler()
+    yield
+
 
 app = FastAPI(
     title=settings.APP_NAME,
+    description="Lord of the Rings API Service",
+    version="1.0.0",
+    lifespan=setup,
 )
-app.openapi = custom_openapi
 
-app.include_router(
-    auth_router,
-    prefix=API_V1_PREFIX,
-)
+app.include_router(api_router, prefix=API_V1_PREFIX)
+
+app.openapi = lambda: custom_openapi(app)
+
+
 if __name__ == "__main__":
     uvicorn.run(
         "main:app",
