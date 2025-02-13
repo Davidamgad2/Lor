@@ -1,8 +1,7 @@
 from redis.asyncio import Redis
 from settings import settings
-from typing import Optional
 import json
-from typing import List, Any
+from typing import Optional, Any, List, Dict
 from characters.schemas import LorCharchter
 from datetime import datetime
 from uuid import UUID
@@ -25,21 +24,35 @@ def serialize_lor_character(obj: Any) -> Any:
     return obj
 
 
-def deserialize_lor_character(data: dict) -> dict:
+def deserialize_lor_character(data: Dict[str, Any]) -> Dict[str, Any]:
     """Deserialize objects from Redis storage"""
+    result = {}
     for key, value in data.items():
         if isinstance(value, str):
             try:
-                data[key] = UUID(value)
+                result[key] = UUID(value)
                 continue
             except ValueError:
                 pass
-            if value.endswith("Z"):
-                try:
-                    data[key] = datetime.fromisoformat(value.rstrip("Z"))
-                except ValueError:
-                    pass
-    return data
+
+            try:
+                result[key] = datetime.fromisoformat(value)
+                continue
+            except ValueError:
+                pass
+
+        elif isinstance(value, dict):
+            result[key] = deserialize_lor_character(value)
+            continue
+        elif isinstance(value, list):
+            result[key] = [
+                deserialize_lor_character(item) if isinstance(item, dict) else item
+                for item in value
+            ]
+            continue
+
+        result[key] = value
+    return result
 
 
 class RedisClient:
