@@ -7,8 +7,7 @@ from jose import JWTError, jwt
 from auth.models import User, BlacklistedToken
 from db import get_async_session
 from settings import settings
-from redis.asyncio import Redis
-from helpers.redis import get_redis
+from helpers.redis import RedisClient
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -50,9 +49,8 @@ async def authenticate_user(
     return None
 
 
-async def blacklist_token(
-    token: str, db: AsyncSession, redis_client: Redis = Depends(get_redis)
-) -> None:
+async def blacklist_token(token: str, db: AsyncSession) -> None:
+    redis_client = await RedisClient.get_instance()
     blacklisted = BlacklistedToken(token=token)
     db.add(blacklisted)
     await db.commit()
@@ -61,9 +59,8 @@ async def blacklist_token(
     )
 
 
-async def is_token_blacklisted(
-    token: str, db: AsyncSession, redis_client: Redis = Depends(get_redis)
-) -> bool:
+async def is_token_blacklisted(token: str, db: AsyncSession) -> bool:
+    redis_client = await RedisClient.get_instance()
     exists = await redis_client.get(f"bl:{token}")
     if exists:
         return True

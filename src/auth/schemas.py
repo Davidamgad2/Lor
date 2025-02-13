@@ -26,3 +26,12 @@ class UserInDB(UserCreate):
 class UserLogin(BaseModel):
     username: str
     password: str
+
+
+class RefreshToken(BaseModel):
+    refresh_token: str
+
+    class Config:
+        json_schema_extra = {
+            "example": {"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."}
+        }

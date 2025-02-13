@@ -15,6 +15,7 @@ from .dependencies import (
 from .models import User
 import logging
 from sqlalchemy.exc import IntegrityError
+from auth.schemas import RefreshToken
 
 logger = logging.getLogger(__name__)
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
@@ -76,7 +77,7 @@ async def login(
 
 @auth_router.post("/refresh", response_model=Dict[str, str])
 async def refresh(
-    refresh_token: str,
+    refresh_token: RefreshToken,
     db: AsyncSession = Depends(get_async_session),
 ):
     user_id = await verify_refresh_token(refresh_token, db)
@@ -95,7 +96,9 @@ async def me(user: User = Depends(get_current_user)):
 
 
 @auth_router.post("/signout", response_model=Dict[str, str])
-async def signout(refresh_token: str, db: AsyncSession = Depends(get_async_session)):
+async def signout(
+    refresh_token: RefreshToken, db: AsyncSession = Depends(get_async_session)
+):
     logging.info(f"Signing out user with token: {refresh_token}")
     await blacklist_token(refresh_token, db)
     return {"msg": "User signed out successfully"}

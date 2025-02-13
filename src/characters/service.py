@@ -1,9 +1,10 @@
 from typing import List, Optional
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
-
-from characters.models import LorCharacter
+from fastapi import HTTPException
+from characters.models import LorCharacter, UserFavoriteCharacter
 from characters.schemas import LorCharchter
+from sqlalchemy.exc import IntegrityError
 
 
 async def create_lor_character(
@@ -102,3 +103,44 @@ async def bulk_create_or_update_characters(
 
     await session.commit()
     return results
+
+
+async def get_user_favorite_characters(
+    db: AsyncSession, user_id: str
+) -> List[LorCharacter]:
+    query = (
+        select(LorCharacter)
+        .join(UserFavoriteCharacter)
+        .where(UserFavoriteCharacter.user_id == user_id)
+    )
+    result = await db.exec(query)
+    return result.all()
+
+
+async def add_character_to_favorites(db: AsyncSession, user_id: str, character_id: str):
+    favorite = UserFavoriteCharacter(user_id=user_id, character_id=character_id)
+    db.add(favorite)
+    try:
+        await db.commit()
+        return {"message": "Character added to favorites"}
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail="Character already in favorites")
+
+
+async def remove_character_from_favorites(
+    db: AsyncSession, user_id: str, character_id: str
+):
+    query = select(UserFavoriteCharacter).where(
+        UserFavoriteCharacter.user_id == user_id,
+        UserFavoriteCharacter.character_id == character_id,
+    )
+    result = await db.exec(query)
+    favorite = result.one_or_none()
+
+    if not favorite:
+        raise HTTPException(status_code=404, detail="Character not in favorites")
+
+    await db.delete(favorite)
+    await db.commit()
+    return {"message": "Character removed from favorites"}
