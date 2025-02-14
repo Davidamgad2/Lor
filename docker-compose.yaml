@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    environment:
+      # Database configuration (use container name, not localhost)
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: heroes_db
+      DB_USER: hero
+      DB_PASSWORD: heroPass123
+
+      # App settings
+      APP_NAME: "Lord of the Rings API"
+      APP_HOST: "0.0.0.0"
+      APP_PORT: "8000"
+      NUMBER_OF_WORKERS: "2"
+      DEBUG: "True"
+
+      # JWT
+      secret_key: your-secret-key
+      algorithm: HS256
+      access_token_expire_minutes: "30"
+      refresh_token_expire_minutes: "1"
+
+      # Redis configuration (use container name)
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_DB: "0"
+
+      # API External configuration
+      LOR_API_KEY: luNKPGgPb3PsDP5lSb7E
+      LOR_API_BASE_URL: "https://the-one-api.dev/v2"
+    restart: always
+    command: ["sh", "-c","alembic upgrade head && uvicorn src.main:app --host 0.0.0.0 --port 8000"]
+
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: heroes_db
+      POSTGRES_USER: hero
+      POSTGRES_PASSWORD: heroPass123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:alpine
+
+volumes:
+  postgres_data:

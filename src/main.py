@@ -1,4 +1,3 @@
-import uvicorn
 from fastapi import FastAPI
 from settings import settings, custom_openapi
 from routers import api_router
@@ -24,12 +23,3 @@ app = FastAPI(
 app.include_router(api_router, prefix=API_V1_PREFIX)
 
 app.openapi = lambda: custom_openapi(app)
-
-
-if __name__ == "__main__":
-    uvicorn.run(
-        "main:app",
-        port=settings.APP_PORT,
-        host=settings.APP_HOST,
-        reload=settings.DEBUG,
-    )
