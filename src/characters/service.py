@@ -103,7 +103,6 @@ async def bulk_create_or_update_characters(
     }
     values = []
     for data in characters_data:
-        # Only process records with an _id; convert it to external_id.
         if "_id" in data:
             cleaned_data = {}
             cleaned_data["external_id"] = data["_id"]
@@ -118,14 +117,12 @@ async def bulk_create_or_update_characters(
     try:
         stmt = pg_insert(LorCharacter.__table__).values(values)
 
-        # Build the update dictionary, skipping the external_id to keep it as the unique key.
         update_dict = {
             field: getattr(stmt.excluded, field)
             for field in allowed_fields
             if field != "external_id"
         }
 
-        # Use a returning clause with all table columns.
         stmt = stmt.on_conflict_do_update(
             index_elements=["external_id"], set_=update_dict
         ).returning(*LorCharacter.__table__.columns)
@@ -133,7 +130,6 @@ async def bulk_create_or_update_characters(
         result = await session.execute(stmt)
         await session.commit()
 
-        # Convert rows to LorCharacter instances
         return [LorCharacter(**row._mapping) for row in result.fetchall()]
 
     except Exception as e:

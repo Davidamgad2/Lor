@@ -10,23 +10,18 @@ from src.settings import settings
 from alembic import context
 import sqlmodel
 
-# add your project's src directory to the sys.path
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
 )
 
-# IMPORT YOUR MODELS so that target_metadata is populated
 from src.auth.models import *
 from src.characters.models import *
 from sqlmodel import SQLModel
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
 config = context.config
 DB_URL = settings.db_url
 config.set_main_option("sqlalchemy.url", DB_URL)
 context.config.attributes["sqlmodel"] = sqlmodel
-# Interpret the config file for Python logging.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 

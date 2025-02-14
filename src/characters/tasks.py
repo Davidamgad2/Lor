@@ -76,10 +76,8 @@ def start_scheduler():
         except Exception as e:
             logger.error(f"Error during initial data check: {str(e)}")
 
-    # Run initialization check immediately
     scheduler.add_job(initialize_data, "date")
 
-    # Schedule regular updates
     scheduler.add_job(
         fetch_and_update,
         "cron",
