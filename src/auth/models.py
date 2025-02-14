@@ -23,4 +23,5 @@ class User(BaseModel, table=True):
 
 class BlacklistedToken(BaseModel, table=True):
     __tablename__ = "blacklisted_tokens"
+    __table_args__ = {"extend_existing": True}
     token: str = Field(sa_column_kwargs={"unique": True, "index": True})

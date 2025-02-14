@@ -1,4 +1,5 @@
 from typing import List, Optional
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi import HTTPException
@@ -75,12 +76,6 @@ async def delete_lor_character(session: AsyncSession, id: str) -> bool:
     await session.delete(character)
     await session.commit()
     return True
-
-
-from sqlalchemy.dialects.postgresql import insert as pg_insert
-
-
-from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 
 async def bulk_create_or_update_characters(
