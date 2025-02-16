@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
+from uuid import UUID
 
 
 class UserCreate(BaseModel):
@@ -17,7 +18,7 @@ class UserUpdate(BaseModel):
 
 
 class UserInDB(UserCreate):
-    id: int
+    id: UUID
     username: str
     is_active: bool
     is_superuser: bool
@@ -30,8 +31,3 @@ class UserLogin(BaseModel):
 
 class RefreshToken(BaseModel):
     refresh_token: str
-
-    class Config:
-        json_schema_extra = {
-            "example": {"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."}
-        }

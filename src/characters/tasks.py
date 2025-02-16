@@ -7,7 +7,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from characters.service import bulk_create_or_update_characters
 from characters.models import LorCharacter
 import logging
-
+from helpers.redis import invalidate_characters_cache
 logger = logging.getLogger(__name__)
 
 
@@ -49,7 +49,7 @@ async def fetch_and_update(session: AsyncSession = None):
 
         updated_characters = await bulk_create_or_update_characters(session, docs)
         logger.info(f"Successfully processed {len(updated_characters)} characters")
-
+        await invalidate_characters_cache()
     except Exception as e:
         logger.error(f"Error in fetch_and_update task: {str(e)}")
         raise

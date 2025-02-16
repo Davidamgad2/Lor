@@ -32,7 +32,9 @@ class BaseModel(SQLModel):
     """
 
     __abstract__ = True
-    model_config = ConfigDict(arbitrary_types_allowed=True, validate_assignment=True)
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+    )
     id: UUID = Field(default_factory=uuid.uuid7, primary_key=True, index=True)
     is_deleted: bool = Field(default=False)
     created_at: datetime = Field(default_factory=utcnow)

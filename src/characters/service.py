@@ -5,6 +5,12 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi import HTTPException
 from characters.models import LorCharacter, UserFavoriteCharacter
 from characters.schemas import LorCharchter
+from helpers.redis import (
+    cache_lor_character,
+    get_cached_lor_character,
+)
+from helpers.redis import RedisClient, serialize_lor_character
+import json
 from sqlalchemy.exc import IntegrityError
 import logging
 
@@ -26,9 +32,17 @@ async def get_lor_character(session: AsyncSession, id: str) -> Optional[LorChara
     """
     Retrieve a LorCharacter by its external ID.
     """
+    cached_data = await get_cached_lor_character(id)
+    if cached_data:
+        return LorCharacter(**cached_data)
+
     statement = select(LorCharacter).where(LorCharacter.id == id)
     result = await session.exec(statement)
-    return result.one_or_none()
+    character = result.one_or_none()
+
+    if character:
+        await cache_lor_character(character.dict())
+    return character
 
 
 async def list_lor_characters(
@@ -37,11 +51,26 @@ async def list_lor_characters(
     """
     List all LorCharacters within a pagination scope, and an optional name filter.
     """
+    redis = await RedisClient.get_instance()
+    cache_key = f"characters:list:offset={offset}:limit={limit}:name={name}"
+    cached = await redis.get(cache_key)
+    if cached:
+        return [LorCharacter(**item) for item in json.loads(cached)]
+
     statement = select(LorCharacter).offset(offset).limit(limit)
     if name:
         statement = statement.where(LorCharacter.name.ilike(f"%{name}%"))
+
     results = await session.exec(statement)
-    return results.all()
+    characters = results.all()
+
+    await redis.setex(
+        cache_key,
+        3600,
+        json.dumps([serialize_lor_character(char.dict()) for char in characters]),
+    )
+
+    return characters
 
 
 async def update_lor_character(

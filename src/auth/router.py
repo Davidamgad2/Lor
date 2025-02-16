@@ -16,6 +16,7 @@ from .models import User
 import logging
 from sqlalchemy.exc import IntegrityError
 from auth.schemas import RefreshToken
+from typing import Any
 
 logger = logging.getLogger(__name__)
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
@@ -145,7 +146,7 @@ async def refresh(
         The endpoint requires a valid refresh token to be provided in the request body.
         Both the access token and refresh token are renewed in this operation.
     """
-    user_id = await verify_refresh_token(refresh_token, db)
+    user_id = await verify_refresh_token(refresh_token.refresh_token, db)
     new_access_token = create_access_token(user_id)
     new_refresh_token = create_refresh_token(user_id)
     return {
@@ -155,7 +156,7 @@ async def refresh(
     }
 
 
-@auth_router.get("/me", response_model=Dict[str, str])
+@auth_router.get("/me", response_model=Dict[str, Any])
 async def me(user: User = Depends(get_current_user)):
     """
     Retrieves information about the currently authenticated user.
@@ -214,5 +215,11 @@ async def signout(
         }
     """
     logging.info(f"Signing out user with token: {refresh_token}")
-    await blacklist_token(refresh_token, db)
+    try:
+        await blacklist_token(refresh_token.refresh_token, db)
+    except IntegrityError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Token already blacklisted",
+        )
     return {"msg": "User signed out successfully"}

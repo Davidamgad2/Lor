@@ -146,3 +146,52 @@ async def invalidate_user_favorites(user_id: str):
     redis = await RedisClient.get_instance()
     cache_key = f"user:{user_id}:favorites"
     await redis.delete(cache_key)
+
+
+async def cache_lor_character(
+    character: Dict[str, Any], expire_seconds: int = 3600
+) -> None:
+    """
+    Cache a single LorCharacter object.
+    """
+    redis = await RedisClient.get_instance()
+    key = f"character:{character['id']}"
+    await redis.setex(
+        key, expire_seconds, json.dumps(character, default=serialize_lor_character)
+    )
+
+
+async def get_cached_lor_character(character_id: str) -> Optional[Dict[str, Any]]:
+    """
+    Get a cached LorCharacter object.
+    """
+    redis = await RedisClient.get_instance()
+    key = f"character:{character_id}"
+    cached = await redis.get(key)
+    if cached:
+        return json.loads(cached)
+    return None
+
+
+async def invalidate_characters_cache() -> None:
+    """
+    Invalidate all character caches.
+    This example assumes all cached character keys begin with 'character:'.
+    """
+    redis = await RedisClient.get_instance()
+    charchters_keys = await redis.keys("character:*")
+    charchters_list_keys = await redis.keys("characters:list:*")
+    keys = charchters_keys + charchters_list_keys
+    if keys:
+        await redis.delete(*keys)
+
+
+async def invalidate_users_cache() -> None:
+    """
+    Invalidate all user caches.
+    This example assumes all cached user keys begin with 'user:'.
+    """
+    redis = await RedisClient.get_instance()
+    keys = await redis.keys("user:*:favorites")
+    if keys:
+        await redis.delete(*keys)
