@@ -48,6 +48,7 @@ A FastAPI-based REST API service that provides access to Lord of the Rings chara
 
 ### Authentication Routes (`/api/v1/auth/`)
 
+---
 ```
 POST /signup - Register new user
 POST /login - User login
@@ -55,9 +56,11 @@ POST /refresh - Refresh access token
 GET /me - Get current user info
 POST /signout - User logout
 ```
+---
 
 ### Character Routes (`/api/v1/characters/`)
 
+---
 ```
 GET / - List all characters
 GET /{id} - Get specific character
@@ -65,9 +68,11 @@ GET /favorites - Get user's favorite characters
 POST /{id}/favorites - Add character to favorites
 DELETE /{id}/favorites - Remove character from favorites
 ```
+---
 
 ## Project Structure
 
+---
 ```
 src/
 ├── auth/                 # Authentication module
@@ -95,6 +100,7 @@ src/
 ├── db.py             # Database setup
 └── routers.py        # Route registration
 ```
+---
 
 ## ERD for the project
 
@@ -104,37 +110,48 @@ src/
 
 1. Clone the repository
 2. Create and activate virtual environment:
+---
 ```bash
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
 venv\Scripts\activate     # Windows
 ```
+---
 
 3. Install dependencies:
+---
 ```bash
 pip install -r requirements.txt
 ```
+---
 
 4. Set up environment variables:
+---
 ```bash
 cp .env.example .env
 # Edit .env with your configuration
 ```
+---
 
 5. Run migrations:
+---
 ```bash
 alembic upgrade head
 ```
+---
 
 6. Start the server:
+---
 ```bash
 python src/main.py
 ```
+---
 
 ## Environment Variables
 
 Required environment variables in `.env`:
 
+---
 ```
 # Database
 DB_HOST=localhost
@@ -164,6 +181,14 @@ REDIS_DB=0
 LOR_API_KEY=your_api_key
 LOR_API_BASE_URL=https://the-one-api.dev/v2
 ```
+---
+
+## Running the project locally
+ -using docker:
+  ```bash
+  docker-compose up --build -d
+  ```
+
 ## Testing the Apis
 Please refer to `/api/docs/`
 
@@ -177,3 +202,6 @@ Please refer to `/api/docs/`
 - APScheduler: Background tasks
 - PostgreSQL: Database
 """
+
+## System design for future scalability
+![system](./system.png)
